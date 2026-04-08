@@ -256,14 +256,17 @@ def generate_ai_summary(df: pd.DataFrame, profile: dict) -> str:
 
     if len(num) >= 2:
         corr = df[num].corr().abs()
-        np.fill_diagonal(corr.values, 0)
-        max_corr = corr.max().max()
-        if max_corr > 0.5:
-            idx = np.unravel_index(corr.values.argmax(), corr.shape)
-            parts.append(
-                f"Notable correlation exists between <strong>{corr.columns[idx[0]]}</strong> and "
-                f"<strong>{corr.columns[idx[1]]}</strong> (|r| = {max_corr:.2f}). "
-            )
+        corr_arr = corr.to_numpy(copy=True)
+        np.fill_diagonal(corr_arr, 0)
+        
+        if not np.isnan(corr_arr).all():
+            max_corr = np.nanmax(corr_arr)
+            if max_corr > 0.5:
+                idx = np.unravel_index(np.nanargmax(corr_arr), corr_arr.shape)
+                parts.append(
+                    f"Notable correlation exists between <strong>{corr.columns[idx[0]]}</strong> and "
+                    f"<strong>{corr.columns[idx[1]]}</strong> (|r| = {max_corr:.2f}). "
+                )
 
     parts.append(
         "Further exploration through the interactive dashboard is recommended "

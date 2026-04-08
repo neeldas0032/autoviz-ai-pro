@@ -316,7 +316,12 @@ def _best_corr_pair(df, cols):
     if len(cols) < 2:
         return cols[0], cols[0]
     corr = df[cols].corr().abs()
-    # Zero out diagonal
-    np.fill_diagonal(corr.values, 0)
-    idx = np.unravel_index(corr.values.argmax(), corr.shape)
+    # Zero out diagonal safely
+    corr_arr = corr.to_numpy(copy=True)
+    np.fill_diagonal(corr_arr, 0)
+    
+    if np.isnan(corr_arr).all():
+        return cols[0], cols[1] if len(cols) > 1 else cols[0]
+        
+    idx = np.unravel_index(np.nanargmax(corr_arr), corr_arr.shape)
     return corr.columns[idx[0]], corr.columns[idx[1]]
